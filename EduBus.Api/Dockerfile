@@ -8,7 +8,7 @@ RUN dotnet restore
 
 # Copy all source files and publish
 COPY . ./
-RUN dotnet publish -c Release -o /app/out
+RUN dotnet publish EduBus.Api.csproj -c Release -o /app/out
 
 # Runtime Stage
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
