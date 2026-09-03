@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeBus — Smart Transport & Child Safety Platform</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Leaflet CSS for Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="styles.css?v=999">
+</head>
+<body>
+    <!-- Telegram-Style Side Drawer Overlay & Menu (Direct Body Child) -->
+    <div id="mobileDrawerOverlay" class="drawer-overlay" onclick="closeMobileDrawer()">
+        <div id="mobileDrawer" class="side-drawer" onclick="event.stopPropagation()">
+            <div class="drawer-header">
+                <div class="drawer-user-row">
+                    <div class="drawer-avatar" id="drawerAvatar">SB</div>
+                    <button type="button" class="drawer-close-btn" onclick="closeMobileDrawer()">&times;</button>
+                </div>
+                <h3 class="drawer-user-name" id="drawerUserName">SafeBus Profil</h3>
+                <p class="drawer-user-phone" id="drawerUserPhone">📱 Tizimga Ulangan (OTP Verified)</p>
+            </div>
+
+            <div class="drawer-menu-list">
+                <div class="drawer-item" onclick="openParentOtpModal(); closeMobileDrawer();">
+                    <i class="fa-solid fa-mobile-retro" style="color: #38bdf8;"></i>
+                    <span>Tizimga Kirish (Telegram OTP SMS)</span>
+                </div>
+                <div class="drawer-item" onclick="openRoleModal(); closeMobileDrawer();">
+                    <i class="fa-solid fa-user-gear" style="color: #38bdf8;"></i>
+                    <span>Joriy Rol: <b id="drawerRoleLabel" style="color: #ffd600;">Ota-ona Portali</b></span>
+                </div>
+                <div class="drawer-item" onclick="openRoleModal(); closeMobileDrawer();">
+                    <i class="fa-solid fa-repeat" style="color: #ffd600;"></i>
+                    <span>Rolni O'zgartirish (Role Switcher)</span>
+                </div>
+                <div class="drawer-item" onclick="openPayModal('CLICK PASS & PAYME CHECKOUT'); closeMobileDrawer();">
+                    <i class="fa-solid fa-wallet" style="color: #22c55e;"></i>
+                    <span>Obuna va To'lovlar (Click / Payme)</span>
+                </div>
+                <div class="drawer-item" onclick="openLanguageModal(); closeMobileDrawer();">
+                    <i class="fa-solid fa-globe" style="color: #38bdf8;"></i>
+                    <span>Tilni O'zgartirish (100+ Languages)</span>
+                </div>
+                <div class="drawer-item" id="drawerSoundItem" onclick="toggleSoundFromDrawer()">
+                    <i class="fa-solid fa-volume-high" style="color: #38bdf8;"></i>
+                    <span id="drawerSoundText">Tovush Signalizatsiyasi: YOQILGAN</span>
+                </div>
+                <div class="drawer-divider"></div>
+                <div class="drawer-item" onclick="alert('SafeBus v3.5 Enterprise • Real-Time Protection Platform')">
+                    <i class="fa-solid fa-circle-info" style="color: #94a3b8;"></i>
+                    <span>Tizim Haqida & Versiya</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Telegram OTP Login Modal -->
+    <div class="modal-overlay hidden" id="parentOtpModal">
+        <div class="modal-card glass-card" style="max-width: 440px; text-align: center; padding: 32px 24px;">
+            <div style="width: 64px; height: 64px; background: rgba(56, 189, 248, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+                <i class="fa-solid fa-mobile-retro" style="font-size: 30px; color: #38bdf8;"></i>
+            </div>
+            <h2 style="font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 6px;">SafeBus Tizimiga Kirish</h2>
+            <p style="font-size: 13.5px; color: #94a3b8; margin-bottom: 20px;">Ota-ona telefon raqamingizni kiriting va Telegram orqali 4-xonali tasdiqlash kodini oling:</p>
+
+            <!-- Step 1: Phone Input -->
+            <div id="otpStep1">
+                <div style="position: relative; margin-bottom: 16px;">
+                    <i class="fa-solid fa-phone" style="position: absolute; left: 16px; top: 16px; color: #94a3b8;"></i>
+                    <input type="text" id="otpPhoneInput" class="form-input" value="+998 90 123 45 67" placeholder="+998 90 123 45 67" style="padding-left: 45px; height: 48px; font-size: 16px; font-weight: 700; width: 100%;">
+                </div>
+                <button type="button" class="btn btn-primary btn-block" id="btnSendOtpCode" style="height: 48px; font-size: 15px; background: linear-gradient(135deg, #0088cc, #006699); border: none; color: #fff;">
+                    <i class="fa-paper-plane fa-solid"></i> Kod Yuborish (Telegram)
+                </button>
+            </div>
+
+            <!-- Step 2: Code Verification Input -->
+            <div id="otpStep2" style="display: none;">
+                <div style="background: rgba(0, 136, 204, 0.1); border: 1px solid rgba(0, 136, 204, 0.3); border-radius: 12px; padding: 12px; margin-bottom: 16px; text-align: left;">
+                    <p style="font-size: 12px; color: #38bdf8; margin: 0;"><i class="fa-solid fa-circle-check"></i> Telegram Botingizga 4-xonali kod yuborildi!</p>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <input type="text" id="otpCodeInput" maxlength="4" placeholder="8 4 9 2" class="form-input" style="height: 52px; font-size: 26px; font-weight: 800; text-align: center; letter-spacing: 12px; background: rgba(0,0,0,0.4); border-color: #ffd600; color: #ffd600; width: 100%;">
+                </div>
+                <button type="button" class="btn btn-success btn-block" id="btnVerifyOtpCode" style="height: 48px; font-size: 15px;">
+                    <i class="fa-solid fa-right-to-bracket"></i> Tizimga Kirish
+                </button>
+            </div>
+
+            <p id="otpStatusMsg" style="font-size: 12px; color: #ffd600; margin-top: 14px; min-height: 20px; font-weight: 600;"></p>
+        </div>
+    </div>
+
+    <!-- School Admin Login Modal -->
+    <div class="modal-overlay hidden" id="adminLoginModal">
+        <div class="modal-card glass-card" style="max-width: 440px; text-align: center; padding: 32px 24px;">
+            <div style="width: 64px; height: 64px; background: rgba(168, 85, 247, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto; border: 1px solid rgba(168, 85, 247, 0.4);">
+                <i class="fa-solid fa-user-shield" style="font-size: 30px; color: #c084fc;"></i>
+            </div>
+            <h2 style="font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 6px;">Maktab Admin Paneli</h2>
+            <p style="font-size: 13.5px; color: #94a3b8; margin-bottom: 20px;">Maktab ma'muriyati login va parolini kiriting:</p>
+
+            <form id="adminLoginForm">
+                <div style="position: relative; margin-bottom: 14px; text-align: left;">
+                    <label style="font-size: 12px; color: #94a3b8; font-weight: 700; margin-bottom: 6px; display: block;">Admin Login / Email *</label>
+                    <div style="position: relative;">
+                        <i class="fa-solid fa-user" style="position: absolute; left: 16px; top: 16px; color: #94a3b8;"></i>
+                        <input type="text" id="adminLoginUsername" class="form-input" value="admin@safebus.uz" placeholder="admin@safebus.uz" style="padding-left: 45px; height: 48px; font-size: 15px; font-weight: 600; width: 100%;">
+                    </div>
+                </div>
+
+                <div style="position: relative; margin-bottom: 20px; text-align: left;">
+                    <label style="font-size: 12px; color: #94a3b8; font-weight: 700; margin-bottom: 6px; display: block;">Maxfiy Parol *</label>
+                    <div style="position: relative;">
+                        <i class="fa-solid fa-lock" style="position: absolute; left: 16px; top: 16px; color: #94a3b8;"></i>
+                        <input type="password" id="adminLoginPassword" class="form-input" value="admin123" placeholder="••••••••" style="padding-left: 45px; height: 48px; font-size: 15px; font-weight: 600; width: 100%;">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block" style="height: 48px; font-size: 15px; background: linear-gradient(135deg, #a855f7, #7e22ce); border: none; color: #fff; font-weight: 800;">
+                    <i class="fa-solid fa-right-to-bracket"></i> Admin Panelga Kirish
+                </button>
+            </form>
+
+            <p id="adminLoginStatusMsg" style="font-size: 12px; color: #ffd600; margin-top: 14px; min-height: 20px; font-weight: 600;"></p>
+            <button type="button" class="btn btn-xs btn-outline" onclick="document.getElementById('adminLoginModal').classList.add('hidden')" style="margin-top: 10px;">Bekor Qilish</button>
+        </div>
+    </div>
+
+    <!-- Top Header -->
+    <header class="app-header">
+        <div class="logo-area">
+            <button type="button" class="drawer-hamburger-btn" id="btnOpenMobileDrawer" onclick="document.getElementById('mobileDrawerOverlay').style.display='flex'" ontouchstart="document.getElementById('mobileDrawerOverlay').style.display='flex'">
+                <i class="fa-solid fa-bars" style="font-size: 22px;"></i>
+            </button>
+            <div class="logo-icon">
+                <i class="fa-solid fa-bus-simple"></i>
+                <span class="pulse-dot"></span>
+            </div>
+            <div class="logo-text">
+                <h1>Safe<span>Bus</span></h1>
+            </div>
+        </div>
+
+        <div class="current-role-indicator">
+            <i class="fa-solid fa-user-shield"></i>
+            <span>Joriy Rol: <strong id="currentRoleText">Avtobus Skaner Qurilmasi</strong></span>
+        </div>
+
+        <div class="header-actions">
+            <!-- Global Language Selector Button -->
+            <button class="btn btn-outline" id="openLangModalBtn">
+                <i class="fa-solid fa-globe" style="color: var(--accent-cyan);"></i> <span id="currentLangText">🇺🇿 O'zbekcha</span>
+            </button>
+
+            <button class="btn btn-primary" id="openRoleSelectorBtn">
+                <i class="fa-solid fa-repeat"></i> Rolni O'zgartirish
+            </button>
+            <button class="btn btn-outline" id="soundToggleBtn">
+                <i class="fa-solid fa-volume-high" id="soundIcon"></i> Tovush: YOQILGAN
+            </button>
+            <span class="live-clock" id="liveClock">00:00:00</span>
+        </div>
+    </header>
+
+    <!-- Role Selection Overlay Modal -->
+    <div class="modal-overlay hidden" id="roleModal">
+        <div class="modal-card glass-card">
+            <h2><i class="fa-solid fa-users-gear text-accent"></i> SafeBus Tizimiga Kirish — Rolni Tanlang</h2>
+            <p class="modal-desc">Foydalanuvchi turiga qarab mos interfeysga kiring:</p>
+
+            <div class="role-grid">
+                <div class="role-option-card" id="selectRoleDevice">
+                    <div class="role-icon icon-cyan"><i class="fa-solid fa-tablet-button"></i></div>
+                    <h3>1. Avtobus Skaner Qurilmasi</h3>
+                    <p>Avtobus eshigi oldidagi planshet terminali. Barmoq izi (Biometriya) orqali skanerlash rejimi.</p>
+                    <span class="btn btn-sm btn-primary">Terminalni Ochish</span>
+                </div>
+
+                <div class="role-option-card" id="selectRoleParent">
+                    <div class="role-icon icon-green"><i class="fa-solid fa-mobile-screen-button"></i></div>
+                    <h3>2. Ota-ona Portali</h3>
+                    <p>Faqat o'zingizning farzandingiz holati, avtobus xaritasi va push-xabarnomalarni ko'rish.</p>
+                    <span class="btn btn-sm btn-success">Portalga Kirish</span>
+                </div>
+
+                <div class="role-option-card" id="selectRoleAdmin">
+                    <div class="role-icon icon-purple"><i class="fa-solid fa-school"></i></div>
+                    <h3>3. SafeBus Admin Paneli</h3>
+                    <p>Yangi o'quvchi va ota-onani ro'yxatdan o'tkazish, kartalar ulash va floti boshqarish.</p>
+                    <span class="btn btn-sm btn-outline">Admin Panelni Ochish</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Fingerprint Scanning Animation Modal -->
+    <div class="modal-overlay hidden" id="adminScanModal">
+        <div class="modal-card glass-card text-center" style="max-width: 420px; text-align: center;">
+            <h2><i class="fa-solid fa-fingerprint text-accent"></i> Admin Biometrik Skaneri</h2>
+            <p class="modal-desc">Barmog'ingizni skaner datchigiga bosing...</p>
+
+            <div class="modal-scanner-box" id="adminModalScanBox" style="margin: 25px auto; width: 130px; height: 130px; background: rgba(0, 242, 254, 0.1); border: 2px dashed var(--accent-cyan); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease;">
+                <i class="fa-solid fa-fingerprint sensor-pulse-icon" id="adminModalScanIcon" style="font-size: 4rem; color: var(--accent-cyan);"></i>
+            </div>
+
+            <p class="text-muted" id="adminModalScanStatus" style="font-size: 14px; min-height: 24px;">👇 Skanerlash uchun barmoq izini bosing!</p>
+            <button class="btn btn-outline" id="closeAdminScanModalBtn" style="margin-top: 15px;">Bekor qilish</button>
+        </div>
+    </div>
+
+    <!-- Searchable Multi-Language Selector Modal (100+ Global Languages) -->
+    <div class="modal-overlay hidden" id="languageSearchModal">
+        <div class="modal-card glass-card" style="max-width: 680px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h2><i class="fa-solid fa-globe text-accent"></i> Dunyo Tillari va Davlatlar (100+ Tillar)</h2>
+                <button class="btn btn-xs btn-outline" id="closeLangModalBtn" style="padding: 6px 12px;"><i class="fa-solid fa-xmark"></i> Yopish</button>
+            </div>
+            <p class="modal-desc">SafeBus platformasida kerakli tilni yoki davlatni qidiring va tanlang:</p>
+
+            <!-- Search input bar -->
+            <div style="position: relative; margin: 15px 0 20px 0;">
+                <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 16px; top: 16px; color: var(--text-muted); font-size: 16px;"></i>
+                <input type="text" id="langSearchInput" placeholder="Tilni qidiring (masalan: Qaraqalpaq, Qazaq, Kyrgyz, Tajik, Deutsch)..." class="form-input" style="padding-left: 45px; height: 48px; font-size: 15px; background: rgba(255,255,255,0.06);">
+            </div>
+
+            <!-- Scrollable Language List Grid -->
+            <div id="globalLangGrid" style="max-height: 330px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; padding-right: 5px;">
+                <!-- Populated dynamically by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN VIEWS CONTAINER -->
+    <main class="main-container">
+
+        <!-- ========================================== -->
+        <!-- VIEW 1: DEDICATED BUS HARDWARE DEVICE MODE -->
+        <!-- ========================================== -->
+        <section class="role-view active" id="viewBusDevice">
+            <div class="terminal-container">
+                <div class="terminal-header">
+                    <div class="bus-info-tag">
+                        <i class="fa-solid fa-school"></i>
+                        <span>№110-Maktab • SafeBus №05 Terminali (Chilonzor yo'nalishi)</span>
+                    </div>
+                    <div class="terminal-live-count">
+                        <i class="fa-solid fa-children"></i> Avtobusdagi Bolalar: <strong id="terminalOnBusCount">0</strong> ta
+                    </div>
+                </div>
+
+                <!-- Center Large Scanner Area -->
+                <div class="terminal-scanner-box glass-card" id="terminalScannerBox">
+                    <div class="scanner-ready-state" id="scannerReadyState">
+                        <div class="scanner-target">
+                            <i class="fa-solid fa-fingerprint sensor-pulse-icon" style="color: var(--accent-cyan); font-size: 3.5rem;"></i>
+                        </div>
+                        <h2>Barmoq Izingizni Tekkizing</h2>
+                        <p class="scan-subtext">Barmog'ingizni biometrik skanerga bosib turing</p>
+                    </div>
+
+                    <!-- Scan Success State (Auto Resets in 2.5 seconds) -->
+                    <div class="scanner-success-state hidden" id="scannerSuccessState">
+                        <div class="scan-avatar-circle" id="scanAvatarCircle">AR</div>
+                        <h2 id="terminalStudentName">Ali Rahimov</h2>
+                        <p class="student-meta-info" id="terminalStudentClass">3-A Sinf • Biometrik ID: FP-9921</p>
+                        
+                        <div class="status-action-pill" id="terminalActionPill">
+                            <i class="fa-solid fa-circle-check"></i> CHECK-IN (Avtobusga Chiqdi)
+                        </div>
+                        <p class="scan-timestamp" id="terminalScanTime">07:45:12 • Bekat: Chilonzor</p>
+
+                        <div class="reset-progress-bar">
+                            <div class="progress-fill" id="resetProgressFill"></div>
+                        </div>
+                        <span class="reset-text">Keyingi bolaga tayyorlanmoqda...</span>
+                    </div>
+                </div>
+
+                <!-- Simulation Quick-Tap Bar for Demonstration -->
+                <div class="glass-card terminal-simulation-bar">
+                    <h3><i class="fa-solid fa-fingerprint text-accent"></i> Biometrik Skanerlash Simulyatsiyasi (Barmoq izi bosish):</h3>
+                    
+                    <div class="quick-cards-list" id="terminalQuickCards">
+                        <!-- Dynamic Student Quick Buttons Injected Here -->
+                    </div>
+
+                    <!-- Manual Card UID Input -->
+                    <div class="manual-uid-input">
+                        <input type="text" id="manualCardUidInput" placeholder="Barmoq izi ID kiriting (masalan: FP-9921)...">
+                        <button class="btn btn-accent" id="manualScanBtn">
+                            <i class="fa-solid fa-fingerprint"></i> Barmoq Izini Skanerlash
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW 2: PARENT PORTAL VIEW                 -->
+        <!-- ========================================== -->
+        <section class="role-view" id="viewParentPortal">
+            <!-- Parent Selector Dropdown & Top Subscription Bar -->
+            <div class="glass-card parent-filter-card" style="margin-bottom: 20px;">
+                <div class="filter-flex" style="display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 300px;">
+                        <label><i class="fa-solid fa-mobile-screen-button text-accent"></i> Ota-ona Akkaunti:</label>
+                        <select id="parentSelectDropdown" class="form-select" style="max-width: 320px;">
+                            <!-- Populated by JS -->
+                        </select>
+                        <span class="badge badge-outline" style="font-size:12px; color: var(--accent-green);"><i class="fa-solid fa-comment-sms"></i> OTP Verified</span>
+                    </div>
+
+                    <!-- Sleek Top Subscription Bar Button -->
+                    <div style="display: flex; align-items: center; gap: 12px; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(56, 189, 248, 0.3); padding: 8px 16px; border-radius: 12px;">
+                        <span class="badge" id="subStatusBadge" style="background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid #22c55e; font-size: 12px;">🟢 Obuna: FAOL (28 kun)</span>
+                        <button type="button" class="btn btn-sm" id="btnOpenSubModal" style="background: linear-gradient(135deg, #0088cc, #005bff); color: #fff; border: none; font-weight: 600; border-radius: 8px; padding: 7px 14px; font-size: 12.5px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-credit-card"></i> Obuna Uzaytirish (Click / Payme)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-2col">
+                <!-- Left: Child Status Card & Push Notifications -->
+                <div class="glass-card">
+                    <div class="panel-header">
+                        <h2><i class="fa-solid fa-child-reaching text-accent"></i> Farzandingiz Holati</h2>
+                        <span class="badge badge-primary" id="parentChildStatusBadge">Avtobusda</span>
+                    </div>
+
+                    <div class="child-profile-banner">
+                        <div class="child-avatar" id="parentChildAvatar">--</div>
+                        <div class="child-info">
+                            <h3 id="parentChildName">Hali o'quvchi kiritilmagan</h3>
+                            <p id="parentChildMeta">Admin panelidan o'quvchi ro'yxatdan o'tkazing</p>
+                            <p class="last-tap-text" id="parentLastTapInfo"><i class="fa-solid fa-clock"></i> Skanerlashlar mavjud emas</p>
+                        </div>
+                    </div>
+
+                    <h3 class="section-subheading"><i class="fa-solid fa-bell"></i> SafeBus Push-Xabarnomalar Streami</h3>
+                    <div class="mobile-push-stream" id="parentPushStream">
+                        <!-- Dynamic Push Cards Injected Here -->
+                    </div>
+                </div>
+
+                <!-- Right: Dedicated Bus Live Map -->
+                <div class="glass-card">
+                    <div class="panel-header">
+                        <h2><i class="fa-solid fa-map-location-dot"></i> SafeBus №05 Live Xaritasi</h2>
+                        <span class="status-pill status-live"><i class="fa-solid fa-satellite-dish"></i> GPS Live</span>
+                    </div>
+
+                    <!-- Real-Time Address & City Search Input Bar -->
+                    <div style="display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; align-items: center;">
+                        <div style="position: relative; flex: 1; min-width: 240px;">
+                            <i class="fa-solid fa-magnifying-glass-location" style="position: absolute; left: 14px; top: 14px; color: #38bdf8; font-size: 16px;"></i>
+                            <input type="text" id="mapAddressSearchInput" placeholder="Manzil yoki shaharni yozing (masalan: Guliston, Sirdaryo, Samarqand)..." class="form-input" style="width: 100%; height: 44px; padding-left: 44px; padding-right: 14px; font-size: 13.5px; font-weight: 600; background: rgba(15, 23, 42, 0.95); border: 1.5px solid rgba(56, 189, 248, 0.5); border-radius: 12px; color: #fff;">
+                        </div>
+                        <button type="button" class="btn btn-sm btn-primary" id="btnSearchAddressMap" style="height: 44px; padding: 0 20px; font-size: 13px; font-weight: 700; border-radius: 12px; white-space: nowrap; background: linear-gradient(135deg, #0088cc, #005bff);">
+                            <i class="fa-solid fa-magnifying-glass"></i> Qidirish
+                        </button>
+                    </div>
+
+                    <div id="parentBusMap" class="map-container"></div>
+                    <div class="route-info">
+                        <div class="info-box">
+                            <i class="fa-solid fa-route text-accent"></i>
+                            <div>
+                                <strong>Marshrut:</strong>
+                                <span>Chilonzor ➔ Muassasa №110</span>
+                            </div>
+                        </div>
+                        <div class="info-box">
+                            <i class="fa-solid fa-gauge text-success"></i>
+                            <div>
+                                <strong>Tezlik:</strong>
+                                <span id="parentBusSpeedText">42 km/s (Xavfsiz)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW 3: SCHOOL ADMIN & DISPATCHER PANEL    -->
+        <!-- ========================================== -->
+        <section class="role-view" id="viewAdminPanel">
+            <!-- Registration Form + Sample Data Button -->
+            <div class="glass-card registration-card">
+                <div class="panel-header">
+                    <h2><i class="fa-solid fa-user-plus text-accent"></i> Ro'yxatdan o'tkazish</h2>
+                </div>
+
+                <form id="registerStudentForm" class="form-grid">
+                    <div class="form-group">
+                        <label>O'quvchi F.I.SH *</label>
+                        <input type="text" id="regFullName" placeholder="Masalan: Ali Rahimov" required class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Sinfi yoki Bog'cha Guruhi *</label>
+                        <input type="text" id="regClassName" placeholder="Masalan: 3-A sinf yoki Katta guruh" required class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Ota-onasi F.I.SH *</label>
+                        <input type="text" id="regParentName" placeholder="Masalan: Farhod Rahimov" required class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Ota-onasi Telefoni *</label>
+                        <input type="text" id="regParentPhone" placeholder="+998 90 123 45 67" required class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-fingerprint text-accent"></i> Biometrik Barmoq Izi ID *</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" id="regCardUid" placeholder="Masalan: FP-9921" required class="form-input" style="font-family: monospace; font-weight: bold; color: var(--accent-cyan);">
+                            <button type="button" class="btn btn-accent" id="adminScanFingerprintBtn" title="Skanerdan ID-ni avtomatik o'qish" style="white-space: nowrap;">
+                                <i class="fa-solid fa-fingerprint"></i> Skanerlash
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Tashkilot (Maktab / Bog'cha) *</label>
+                        <select id="regOrgId" class="form-select">
+                            <option value="1">№110-Maktab • SafeBus №05</option>
+                            <option value="2">№45-Maktab • SafeBus №12</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-globe text-accent"></i> Telegram Bildirishnoma Tili *</label>
+                        <select id="regParentLang" class="form-select">
+                            <option value="uz">🇺🇿 O'zbekcha (Lotin)</option>
+                            <option value="qq">🇺🇿 Qaraqalpaqsha (Qoraqalpoq)</option>
+                            <option value="kk">🇰🇿 Қазақша (Qazaq)</option>
+                            <option value="ru">🇷🇺 Русский (Russian)</option>
+                            <option value="en">🇬🇧 English (International)</option>
+                            <option value="tr">🇹🇷 Türkçe (Turkish)</option>
+                            <option value="tg">🇹🇯 Тоҷикӣ (Tajik)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Biriktirilgan Avtobus va Yo'nalish *</label>
+                        <select id="regBusId" class="form-select">
+                            <option value="5">№05 Avtobus — Chilonzor Yo'nalishi</option>
+                            <option value="8">№08 Avtobus — Yunusobod Yo'nalishi</option>
+                            <option value="12">№12 Avtobus — Sergeli Yo'nalishi</option>
+                        </select>
+                    </div>
+                    <div class="form-group form-btn-group">
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fa-solid fa-plus-circle"></i> SafeBus Ro'yxatidan O'tkazish
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Metric Stats Grid -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-icon icon-blue"><i class="fa-solid fa-user-graduate"></i></div>
+                    <div class="metric-data">
+                        <h3>Jami Bolalar</h3>
+                        <p class="metric-value" id="adminTotalStudents">0</p>
+                        <span class="metric-sub">Ro'yxatdan o'tgan</span>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon icon-green"><i class="fa-solid fa-bus"></i></div>
+                    <div class="metric-data">
+                        <h3>Avtobusdagi Bolalar</h3>
+                        <p class="metric-value" id="adminOnBusCount">0</p>
+                        <span class="metric-sub">Faol qatnovda</span>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon icon-purple"><i class="fa-solid fa-building-user"></i></div>
+                    <div class="metric-data">
+                        <h3>Guruhga Kelganlar</h3>
+                        <p class="metric-value" id="adminAtSchoolCount">0</p>
+                        <span class="metric-sub">Manzil binosida</span>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon icon-orange"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <div class="metric-data">
+                        <h3>Xavfsizlik Sinovlari</h3>
+                        <div class="mini-btn-group">
+                            <button class="btn btn-xs btn-warning" id="adminTriggerForgottenBtn">Bola Qoldi Alert</button>
+                            <button class="btn btn-xs btn-danger" id="adminTriggerSpeedBtn">Tezlik Alert</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Alerts Banner -->
+            <div class="alert-banner hidden" id="adminAlertBanner">
+                <i class="fa-solid fa-triangle-exclamation alert-bell"></i>
+                <div class="alert-content">
+                    <h4 id="adminAlertBannerTitle">XAVFSIZLIK OGOHLANTIRISHI!</h4>
+                    <p id="adminAlertBannerBody">Avtobusda barmoq izini skanerlamay qolib ketgan bola aniqlandi!</p>
+                </div>
+                <button class="btn btn-sm btn-outline-light" id="adminDismissAlertBtn">Yopish</button>
+            </div>
+
+            <!-- Registered Students Table + Pagination -->
+            <div class="glass-card table-card">
+                <div class="panel-header">
+                    <h2><i class="fa-solid fa-users"></i> SafeBus Baza Ro'yxati</h2>
+                    <span class="badge badge-primary">Total: <span id="adminTableCount">0</span> ta</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>F.I.SH</th>
+                                <th>Sinf / Guruh</th>
+                                <th>Ota-onasi</th>
+                                <th>Telefon</th>
+                                <th>Biometrik ID</th>
+                                <th>Joriy Holati</th>
+                                <th>Amallar</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminStudentsTableBody">
+                            <!-- Injected by JS -->
+                        </tbody>
+                    </table>
+
+                    <!-- Enterprise Pagination Bar -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background: rgba(15, 23, 42, 0.6); border-top: 1px solid rgba(255,255,255,0.08); flex-wrap: wrap; gap: 10px;">
+                        <div style="font-size: 13px; color: #94a3b8;" id="paginationInfoText">
+                            Ko'rsatilmoqda: 0 - 0 (Jami 0 ta)
+                        </div>
+                        <div style="display: flex; gap: 6px; align-items: center;" id="adminPaginationControls">
+                            <button type="button" class="btn btn-xs btn-outline" id="btnPagePrev" disabled><i class="fa-solid fa-chevron-left"></i> Oldingi</button>
+                            <span id="paginationPageNumbers" style="font-size: 13px; font-weight: 700; color: #38bdf8; padding: 0 8px;">Sahifa 1 / 1</span>
+                            <button type="button" class="btn btn-xs btn-outline" id="btnPageNext" disabled>Keyingi <i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pagination Footer Bar -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 12px; border-top: 1px solid var(--border-color); font-size: 13px; color: var(--text-muted);">
+                    <span><i class="fa-solid fa-list-ol text-accent"></i> Pagination: Sahifa 1 / 1 (Har sahifada 10 ta yozuv)</span>
+                    <div style="display: flex; gap: 6px;">
+                        <button class="btn btn-xs btn-outline" disabled><i class="fa-solid fa-chevron-left"></i> Avvalgi</button>
+                        <button class="btn btn-xs btn-primary">1</button>
+                        <button class="btn btn-xs btn-outline" disabled>Keyingi <i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Click & Payme Merchant Payment Modal -->
+        <div id="paymentModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999999; backdrop-filter: blur(8px); align-items: center; justify-content: center;">
+            <div class="glass-card" style="width: 90%; max-width: 440px; padding: 24px; border: 2px solid #0088cc; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); background: #0f172a; color: #fff;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                    <h3 id="payModalTitle" style="margin: 0; font-size: 18px; color: #38bdf8; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-qrcode"></i> Click Pass Merchant Checkout
+                    </h3>
+                    <button type="button" id="closePayModal" style="background: none; border: none; color: #fff; font-size: 24px; cursor: pointer;">&times;</button>
+                </div>
+                <div style="text-align: center; margin-bottom: 18px;">
+                    <div id="payModalLogo" style="font-size: 30px; font-weight: 900; color: #0088cc; margin-bottom: 6px; letter-spacing: 1px;">CLICK PASS</div>
+                    <div style="font-size: 13px; color: #94a3b8;">Xizmat: <b>SafeBus Oylik Biometrik Obuna (30 Kun)</b></div>
+                    <div style="font-size: 26px; font-weight: bold; color: #22c55e; margin: 10px 0;">20,000 UZS</div>
+                    <div style="font-size: 13px; color: #f8fafc;" id="payModalStudentName">O'quvchi: Ali Rahimov</div>
+                </div>
+                
+                <div style="background: rgba(255,255,255,0.05); padding: 14px; border-radius: 12px; margin-bottom: 18px; font-size: 13px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: #94a3b8;">Qabul qiluvchi:</span>
+                        <strong>SafeBus Technologies MChJ</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: #94a3b8;">Bank Hisob Raqam:</span>
+                        <strong>2020 8000 •••• 9921</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: #94a3b8;">Tranzaktsiya kodi:</span>
+                        <strong style="color: #38bdf8;" id="payTxCode">TX-992817</strong>
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-primary" id="btnConfirmPayNow" style="width: 100%; padding: 14px; font-size: 15px; font-weight: bold; background: linear-gradient(135deg, #22c55e, #16a34a); border: none; border-radius: 12px; cursor: pointer; color: #fff;">
+                    <i class="fa-solid fa-shield-check"></i> To'lovni Tasdiqlash (20,000 UZS)
+                </button>
+            </div>
+        <!-- Native Mobile App Bottom Navigation Bar -->
+        <nav class="mobile-bottom-nav">
+            <button class="nav-item active" id="mNavHome" onclick="switchMobileTab('home')">
+                <i class="fa-solid fa-house"></i>
+                <span>Bosh Sahifa</span>
+            </button>
+            <button class="nav-item" id="mNavChild" onclick="switchMobileTab('child')">
+                <i class="fa-solid fa-child-reaching"></i>
+                <span>Farzandim</span>
+            </button>
+            <button class="nav-item" id="mNavPay" onclick="openPayModal('CLICK PASS & PAYME CHECKOUT')">
+                <i class="fa-solid fa-wallet"></i>
+                <span>To'lov / Obuna</span>
+            </button>
+            <button class="nav-item" id="mNavSettings" onclick="openLanguageModal()">
+                <i class="fa-solid fa-globe"></i>
+                <span>Til / Sozlama</span>
+            </button>
+        </nav>
+
+    </main>
+
+    <!-- Leaflet JS for Maps -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js?v=999"></script>
+</body>
+</html>
