@@ -7,8 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: safebus-web
     ports:
-      - "5050:5050"
-      - "80:5050"
+      - "5070:5050"
     restart: always
     environment:
       - PORT=5050
@@ -19,5 +18,5 @@ services:
       dockerfile: Dockerfile
     container_name: safebus-api
     ports:
-      - "5000:8080"
+      - "5071:8080"
     restart: always
